@@ -1,0 +1,38 @@
+# Ignore Python cache and virtual environment files
+__pycache__/
+*.py[cod]
+env/
+venv/
+
+# Ignore environment and configuration files
+.env
+config.yaml
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+
+# Ignore OS-specific files
+.DS_Store  # macOS
+Thumbs.db  # Windows
+# Ignore Python cache and virtual environment files
+__pycache__/
+*.py[cod]
+env/
+venv/
+*.egg-info/
+
+# Ignore environment and configuration files
+.env
+config.yaml
+*.ini
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.pid
+
+# Ignore OS-specific files
+.DS_Store  # macOS
+Thumbs.db  # Windows
+ehthumbs.db  # Windows
