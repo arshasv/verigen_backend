@@ -4,6 +4,7 @@ def user_details(user) -> dict:
         "name": user["name"],
         "email": user["email"],
         "security_question": user["security_question"],
+        "answer": user["answer"],
         "password":user["password"]
     }
 

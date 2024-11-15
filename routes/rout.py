@@ -5,6 +5,7 @@ from schemas.schema import users_list
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Annotated
+from models.user import SecurityQuestionRequest, ResetPasswordRequest
 from utils.auth import (
     verify_password,
     hash_password,
@@ -87,3 +88,78 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
         "token_type": "bearer",
         "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES 
     }
+
+
+
+
+
+
+
+
+# Add these routes to your existing router
+@router.post("/forgot-password/security-question")
+async def get_security_question(request: SecurityQuestionRequest):
+    # Find user by email and name
+    user = users_data.find_one({
+        # "email": request.email,
+        "name": request.name
+    })
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No user found with the provided email and name"
+        )
+    
+    # Return only the security question
+    return {
+        "security_question": user["security_question"]
+    }
+
+@router.post("/forgot-password/reset")
+async def reset_password(request: ResetPasswordRequest):
+    # Find user by email and name
+    user = users_data.find_one({
+        "email": request.email,
+        "name": request.name
+    })
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No user found with the provided email and name"
+        )
+    
+    # Verify security question answer
+    if user["answer"].lower() != request.answer.lower():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect answer to security question"
+        )
+    
+    # Validate new password
+    if not is_valid_password(request.new_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters long and contain letters, numbers, and special characters"
+        )
+    
+    # Hash new password and update in database
+    hashed_password = hash_password(request.new_password)
+    result = users_data.update_one(
+        {"email": request.email},
+        {"$set": {"password": hashed_password}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update password"
+        )
+    
+    return {"message": "Password reset successfully"}
+
+
+
+
+
