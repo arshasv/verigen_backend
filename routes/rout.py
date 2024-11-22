@@ -18,9 +18,16 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def is_valid_password(password: str) -> bool:
-    """Check if password is at least 8 characters, alphanumeric, and contains a special character"""
-    pattern = r"(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$"
-    return bool(re.search(pattern, password))
+    """
+    Check if a password is valid based on the following criteria:
+    - At least 8 characters long
+    - Contains at least one uppercase letter
+    - Contains at least one lowercase letter
+    - Contains at least one digit
+    - Contains at least one special character
+    """
+    pattern = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$"
+    return bool(re.match(pattern, password))
 
 def is_valid_username(name: str) -> bool:
     """Check if username contains only alphabet characters and is at least 3 characters long"""
@@ -121,13 +128,13 @@ async def reset_password(request: ResetPasswordRequest):
     # Find user by email and name
     user = users_data.find_one({
         "email": request.email,
-        "name": request.name
+      
     })
     
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No user found with the provided email and name"
+            detail="No user found with the provided email "
         )
     
     # Verify security question answer
