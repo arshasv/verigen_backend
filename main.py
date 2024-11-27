@@ -4,7 +4,21 @@ from routes.route import router
 from routes.blob_route import blob_routes
 
 # Create FastAPI application
+# Create FastAPI application
 app = FastAPI()
+
+# CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",  
+        "http://localhost:3001",  
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["*"],  
+)
+
 
 # CORS Configuration
 app.add_middleware(
