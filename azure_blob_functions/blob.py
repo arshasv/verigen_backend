@@ -30,28 +30,3 @@ def upload_blob(filename: str, container: str, data: BinaryIO):
     except Exception as e:
         return response_json(message=str(e), status=500)
 
-def get_blob(filename: str, container: str):
-    try:
-        blob_client = blob_service_client.get_blob_client(
-            container=container, blob=filename)
-        return response_stream(data=blob_client.download_blob().chunks(), download=False)
-    except Exception as e:
-        return response_json(message=str(e), status=500)
-
-def download_blob(filename: str, container: str):
-    try:
-        blob_client = blob_service_client.get_blob_client(
-            container=container, blob=filename)
-        return response_stream(data=blob_client.download_blob().chunks(), download=True)
-    except Exception as e:
-        return response_json(message=str(e), status=500)
-
-def delete_blob(filename: str, container: str):
-    try:
-        blob_client = blob_service_client.get_blob_client(
-            container=container, blob=filename)
-        
-        blob_client.delete_blob()
-        return response_json(message="success")
-    except Exception as e:
-        return response_json(message=str(e), status=500)
