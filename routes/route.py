@@ -64,7 +64,7 @@ async def user_signup(user: User):
     
     return {"message": "User created successfully"}
 
-@router.get("/login")
+@router.post("/login")
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     # Find user by email
     user = users_data.find_one({"email": form_data.username})  # OAuth2 form uses username field for email
