@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Annotated
 from models.user import SecurityQuestionRequest, ResetPasswordRequest
+from models.user import SecurityQuestionRequest, ResetPasswordRequest
 from utils.auth import (
     verify_password,
     hash_password,
@@ -18,6 +19,16 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def is_valid_password(password: str) -> bool:
+    """
+    Check if a password is valid based on the following criteria:
+    - At least 8 characters long
+    - Contains at least one uppercase letter
+    - Contains at least one lowercase letter
+    - Contains at least one digit
+    - Contains at least one special character
+    """
+    pattern = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$"
+    return bool(re.match(pattern, password))
     """
     Check if a password is valid based on the following criteria:
     - At least 8 characters long
@@ -98,11 +109,6 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 
 
 
-
-
-
-
-
 # Add these routes to your existing router
 @router.post("/forgot-password/security-question")
 async def get_security_question(request: SecurityQuestionRequest):
@@ -123,7 +129,7 @@ async def get_security_question(request: SecurityQuestionRequest):
         "security_question": user["security_question"]
     }
 
-@router.post("/forgot-password/reset")
+@router.put("/forgot-password/reset")
 async def reset_password(request: ResetPasswordRequest):
     # Find user by email and name
     user = users_data.find_one({

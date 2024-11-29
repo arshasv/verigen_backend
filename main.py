@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes.rout import router
+from routes.route import router
+from routes.blob_route import blob_routes
 
+# Create FastAPI application
 # Create FastAPI application
 app = FastAPI()
 
@@ -17,6 +19,5 @@ app.add_middleware(
     allow_headers=["*"],  
 )
 
-
 app.include_router(router)
-
+app.include_router(blob_routes, prefix="/storage/blob")

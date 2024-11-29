@@ -27,3 +27,4 @@ class ResetPasswordRequest(BaseModel):
     name: str
     answer: str
     new_password: str
+
