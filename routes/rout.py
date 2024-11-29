@@ -99,12 +99,6 @@ async def login(login_data: LoginRequest):
     }
 
 
-
-
-
-
-
-
 # Add these routes to your existing router
 @router.post("/forgot-password/security-question")
 async def get_security_question(request: SecurityQuestionRequest):
