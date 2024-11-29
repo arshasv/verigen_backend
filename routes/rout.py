@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from models.user import User, UserLogin
+from models.user import User, UserLogin,LoginRequest
 from config.database import users_data
-from schemas.schema import users_list
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Annotated
@@ -28,6 +27,7 @@ def is_valid_password(password: str) -> bool:
     """
     pattern = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$"
     return bool(re.match(pattern, password))
+  
 
 def is_valid_username(name: str) -> bool:
     """Check if username contains only alphabet characters and is at least 3 characters long"""
@@ -60,23 +60,25 @@ async def user_signup(user: User):
     user_dict = user.model_dump()  # Changed from dict() to model_dump() for newer Pydantic
     user_dict["password"] = hash_password(user.password)
     user_dict["disabled"] = False
+    user_dict["file_urls"] = []
     users_data.insert_one(user_dict)
     
     return {"message": "User created successfully"}
 
+    
 @router.post("/login")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+async def login(login_data: LoginRequest):
     # Find user by email
-    user = users_data.find_one({"email": form_data.username})  # OAuth2 form uses username field for email
+    user = users_data.find_one({"email": login_data.email})
+    
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
     # Verify password
-    if not verify_password(form_data.password, user["password"]):
+    if not verify_password(login_data.password, user["password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
