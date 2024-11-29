@@ -6,6 +6,9 @@ from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 import os
+from fastapi import Depends, HTTPException
+from jose import JWTError, jwt
+from models.user import TokenData
 
 load_dotenv()
 
@@ -47,5 +50,3 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise credentials_exception
     return token_data
-
-  

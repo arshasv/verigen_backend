@@ -125,7 +125,7 @@ async def get_security_question(request: SecurityQuestionRequest):
         "security_question": user["security_question"]
     }
 
-@router.put("/forgot-password/reset")
+@router.post("/forgot-password/reset")
 async def reset_password(request: ResetPasswordRequest):
     # Find user by email and name
     user = users_data.find_one({
