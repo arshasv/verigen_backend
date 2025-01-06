@@ -21,11 +21,10 @@ class TokenData(BaseModel):
 
 class SecurityQuestionRequest(BaseModel):
     email: EmailStr
-    name: str
+    
 
 class ResetPasswordRequest(BaseModel):
     email: EmailStr
-    name: str
     answer: str
     new_password: str
 
