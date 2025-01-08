@@ -9,6 +9,7 @@ from azure_blob_functions.blob import upload_blob
 from config.database import users_data
 
 load_dotenv()
+load_dotenv()
 
 CONTAINER_NAME = os.getenv('CONTAINER_NAME')
 
