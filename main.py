@@ -2,8 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes.route import router
 from routes.blob_route import blob_routes
+from routes.middleware_route import middleware_routes
+ # Change this line to match the correct name
+import uvicorn
 
-# Create FastAPI application
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", port=8080) # Change 8001 to your desired port
 # Create FastAPI application
 app = FastAPI()
 
@@ -21,3 +26,4 @@ app.add_middleware(
 
 app.include_router(router)
 app.include_router(blob_routes, prefix="/storage/blob")
+app.include_router(middleware_routes, prefix="/api")
