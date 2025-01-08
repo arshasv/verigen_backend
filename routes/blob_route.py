@@ -1,25 +1,30 @@
-from fastapi import APIRouter, Form, UploadFile, File, HTTPException, Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from models.user import TokenData
-from utils.auth import get_current_user  # Assuming you have a function to get the current user from the token
+from utils.auth import get_current_user
 import os
 from dotenv import load_dotenv
 from azure_blob_functions.blob import upload_blob
 
-load_dotenv() 
-
+load_dotenv()
 
 CONTAINER_NAME = os.getenv('CONTAINER_NAME')
 
-# Initialize the OAuth2PasswordBearer
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
+# Initialize the HTTPBearer scheme
+security = HTTPBearer()
 blob_routes = APIRouter()
 
 @blob_routes.post("/upload")
-async def upload(container: str = CONTAINER_NAME, file: UploadFile = File(...), token: str = Depends(oauth2_scheme)):
+async def upload(
+    container: str = CONTAINER_NAME,
+    file: UploadFile = File(...),
+    credentials: HTTPAuthorizationCredentials = Security(security)
+):
+    # Get the token from the authorization header
+    token = credentials.credentials
+    
     # Get the current user from the token
-    current_user = get_current_user(token)  # This function should decode the token and return the user
+    current_user = get_current_user(token)
 
     if not container:
         raise HTTPException(status_code=400, detail="Container name is required.")
@@ -28,6 +33,23 @@ async def upload(container: str = CONTAINER_NAME, file: UploadFile = File(...), 
         data = await file.read()
         filename = file.filename
         upload_result = upload_blob(filename, container, data)
-        return {"message": "File uploaded successfully", "result": upload_result, "uploaded_by": current_user.email}
+        
+        # Construct the file URL 
+        # Assuming you're using Azure Blob Storage, the URL would look like:
+        file_url = f"https://{os.getenv('AZURE_STORAGE_ACCOUNT_NAME')}.blob.core.windows.net/{container}/{filename}"
+        
+        # Update user document to add file URL
+        from config.database import users_data
+        users_data.update_one(
+            {"email": current_user.email},
+            {"$push": {"file_urls": file_url}}
+        )
+        
+        return {
+            "message": "File uploaded successfully",
+            "result": upload_result,
+            "uploaded_by": current_user.email,
+            "file_url": file_url
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
