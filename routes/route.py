@@ -73,7 +73,6 @@ async def user_signup(user: User):
     
 @router.post("/login")
 async def login(login_data: LoginRequest):
-async def login(login_data: LoginRequest):
     # Find user by email
     user = users_data.find_one({"email": login_data.email})
     
@@ -86,7 +85,6 @@ async def login(login_data: LoginRequest):
             headers={"WWW-Authenticate": "Bearer"},
         )
     # Verify password
-    if not verify_password(login_data.password, user["password"]):
     if not verify_password(login_data.password, user["password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
