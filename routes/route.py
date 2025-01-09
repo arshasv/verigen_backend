@@ -110,8 +110,8 @@ async def login(login_data: LoginRequest):
 async def get_security_question(request: SecurityQuestionRequest):
     # Find user by email and name
     user = users_data.find_one({
-        # "email": request.email,
-        "name": request.name
+        "email": request.email,
+    
     })
     
     if not user:
