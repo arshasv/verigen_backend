@@ -4,6 +4,11 @@ import os
 from dotenv import load_dotenv
 from config.database import users_data
 from pydantic import BaseModel
+import asyncio
+import pika
+from typing import Dict, Optional
+from contextlib import asynccontextmanager
+
 
 load_dotenv()
 
@@ -23,9 +28,57 @@ class DesignFolderRequest(BaseModel):
     design_folder: str
 
 
+# Global dictionary to store notifications by file_id
+notifications: Dict[str, Optional[dict]] = {}
+
+class RabbitMQNotificationManager:
+    def __init__(self):
+        self.connection = None
+        self.channel = None
+        self.queue_name = "verilog_processing"
+        
+    async def connect(self):
+        # Create connection to RabbitMQ
+        self.connection = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        )
+        self.channel = self.connection.channel()
+        
+        # Declare queue
+        self.channel.queue_declare(queue=self.queue_name, durable=True)
+        
+    async def setup_consumer(self, file_id: str):
+        if not self.connection or self.connection.is_closed:
+            await self.connect()
+            
+        def callback(ch, method, properties, body):
+            message = eval(body.decode())
+            if message.get('file') == file_id:
+                notifications[file_id] = message
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+        
+        self.channel.basic_consume(
+            queue=self.queue_name,
+            on_message_callback=callback
+        )
+        
+    async def start_consuming(self, timeout: int = 30):
+        start_time = asyncio.get_event_loop().time()
+        
+        while asyncio.get_event_loop().time() - start_time < timeout:
+            # Process messages for a short period
+            await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: self.connection.process_data_events(time_limit=1)
+            )
+            await asyncio.sleep(0.1)
+            
+        if self.connection and not self.connection.is_closed:
+            self.connection.close()
 
 
-@middleware_routes.post("/Icarus/{file_id}/")  # Added trailing slash
+@middleware_routes.post("/Icarus/{file_id}/")
 async def process_verilog_file(file_id: str):
     try:
         # Fetch the file URL from the database
@@ -34,12 +87,20 @@ async def process_verilog_file(file_id: str):
             {"file_urls.$": 1}
         )
         
-        if not file_data or not file_data.get("file_urls"):
+        if not file_data or "file_urls" not in file_data:
             raise HTTPException(status_code=404, detail="File not found")
-        
+            
         file_url = file_data["file_urls"][0]["url"]
         
-        # Send to Verilog processing service with proper timeout
+        # Initialize notification manager
+        notification_manager = RabbitMQNotificationManager()
+        await notification_manager.connect()
+        await notification_manager.setup_consumer(file_id)
+        
+        # Clear any existing notifications for this file_id
+        notifications[file_id] = None
+        
+        # Send the file to the Verilog processing service
         async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.post(
                 VERILOG_PROCESS_URL,
@@ -47,8 +108,7 @@ async def process_verilog_file(file_id: str):
                 headers={
                     "Content-Type": "application/json",
                     "Accept": "application/json"
-                },
-                follow_redirects=True  # Handle redirects automatically
+                }
             )
             
             if response.status_code != 200:
@@ -56,26 +116,50 @@ async def process_verilog_file(file_id: str):
                     status_code=response.status_code,
                     detail=f"Verilog processing failed: {response.text}"
                 )
+        
+        # Start consuming messages and wait for notification
+        await notification_manager.start_consuming(timeout=30)
+        
+        # Check if we received a notification
+        notification_result = notifications.get(file_id)
+        if not notification_result:
+            raise HTTPException(
+                status_code=500,
+                detail="Timeout waiting for RabbitMQ notification"
+            )
             
-            # Validate response structure
-            processing_result = response.json()
-            if not isinstance(processing_result, dict):
-                raise HTTPException(status_code=500, detail="Invalid response from Verilog processing service")
-            
-            return {
-                "message": "File sent for processing",
-                "file_url": file_url,
-                "processing_result": processing_result
+        # Return the processing result with notification details
+        return {
+            "message": "File processing completed",
+            "notification": {
+                "status": notification_result["status"],
+                "file": notification_result["file"],
+                "path": notification_result["path"],
+                "processing_details": {
+                    "file_id": file_id,
+                    "original_url": file_url,
+                    "process_time": "completed",
+                }
             }
-            
+        }
+        
     except httpx.RequestError as e:
         raise HTTPException(
             status_code=500,
             detail=f"Failed to connect to Verilog service: {str(e)}"
         )
-        
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Cleanup notification entry
+        if file_id in notifications:
+            del notifications[file_id]
+
+
+
+
+
+
 
 @middleware_routes.post("/Openlane_2/{file_id}/")  # Added trailing slash
 async def process_openlane2(file_id: str):

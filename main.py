@@ -7,6 +7,8 @@ from routes.middleware_route import middleware_routes
 import uvicorn
 
 
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8080) # Change 8001 to your desired port
 # Create FastAPI application
