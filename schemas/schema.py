@@ -1,6 +1,3 @@
-
-
-
 def user_details(user) -> dict:
     return {
         "id": str(user["_id"]),
@@ -13,7 +10,8 @@ def user_details(user) -> dict:
             {
                 "filename": file_url["filename"],
                 "url": file_url["url"],
-                "timestamp": file_url["timestamp"]
-            } for file_url in user.get("file_urls", [])
-        ]
+                "timestamp": file_url["timestamp"],
+            }
+            for file_url in user.get("file_urls", [])
+        ],
     }
