@@ -1,10 +1,8 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from models.user import User, UserLogin, LoginRequest
-from models.user import User, UserLogin, LoginRequest
+from models.user import User,  LoginRequest
 from config.database import users_data
-from datetime import datetime, timedelta
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from typing import Annotated
+from datetime import  timedelta
+from fastapi.security import OAuth2PasswordBearer
 from models.user import SecurityQuestionRequest, ResetPasswordRequest
 from utils.auth import (
     verify_password,
