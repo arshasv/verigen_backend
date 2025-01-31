@@ -81,7 +81,6 @@ class RabbitMQNotificationManager:
 @middleware_routes.post("/Icarus/{file_id}/")
 async def process_verilog_file(file_id: str):
     try:
-        # Fetch the file URL from the database
         file_data = users_data.find_one(
             {"file_urls.filename": file_id},
             {"file_urls.$": 1}

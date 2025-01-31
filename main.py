@@ -3,14 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from routes.route import router
 from routes.blob_route import blob_routes
 from routes.middleware_route import middleware_routes
- # Change this line to match the correct name
+
+# Change this line to match the correct name
 import uvicorn
 
 
-
-
 if __name__ == "__main__":
-    uvicorn.run("main:app", port=8080) # Change 8001 to your desired port
+    uvicorn.run("main:app", port=8080)  # Change 8001 to your desired port
 # Create FastAPI application
 app = FastAPI()
 
@@ -18,12 +17,12 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  
-        "http://localhost:3001",  
+        "http://localhost:3000",
+        "http://localhost:3001",
     ],
     allow_credentials=True,
-    allow_methods=["*"],  
-    allow_headers=["*"],  
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(router)
