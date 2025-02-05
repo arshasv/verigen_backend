@@ -73,8 +73,6 @@ async def login(login_data: LoginRequest):
     # Find user by email
     user = users_data.find_one({"email": login_data.email})
 
-    user = users_data.find_one({"email": login_data.email})
-
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -92,7 +90,7 @@ async def login(login_data: LoginRequest):
     # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user["email"], "name": user["name"]},
+        data={"sub": user["email"], "name": user["name"],"file_urls": user["file_urls"]},
         expires_delta=access_token_expires,
     )
 
@@ -124,7 +122,7 @@ async def get_security_question(request: SecurityQuestionRequest):
     return {"security_question": user["security_question"]}
 
 
-@router.post("/forgot-password/reset")
+
 @router.post("/forgot-password/reset")
 async def reset_password(request: ResetPasswordRequest):
     # Find user by email and name

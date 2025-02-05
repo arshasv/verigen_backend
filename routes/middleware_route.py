@@ -216,6 +216,101 @@ async def process_openlane2(file_id: str):
 
 
 
+
+
+
+# from fastapi import FastAPI, HTTPException, Path, Body
+# from pydantic import BaseModel
+# from typing import List
+# import httpx
+
+# app = FastAPI()
+
+# # Define the request body model using Pydantic
+# class PinConfiguration(BaseModel):
+#     N: List[str]
+#     S: List[str]
+#     E: List[str]
+#     W: List[str]
+
+# class OpenLanePayload(BaseModel):
+#     clock: int
+#     die_area: str
+#     pin_configuration: PinConfiguration
+
+# @middleware_routes.post("/Openlane_2/{file_id}/")  # Added trailing slash
+# async def process_openlane2(
+#     payload: OpenLanePayload,  # Request body (non-default argument)
+#     file_id: str = Path(..., description="The ID of the file to process")  # Path parameter (default argument)
+# ):
+#     try:
+#         # Fetch the file URL from the database
+#         file_data = users_data.find_one(
+#             {"file_urls.filename": file_id},
+#             {"file_urls.$": 1}
+#         )
+        
+#         if not file_data or not file_data.get("file_urls"):
+#             raise HTTPException(status_code=404, detail="File not found")
+        
+#         file_url = file_data["file_urls"][0]["url"]
+        
+#         # Combine the file URL with the dynamically provided payload
+#         api_payload = {
+#             "blob_url": file_url,
+#             "clock": payload.clock,
+#             "die_area": payload.die_area,
+#             "pin_configuration": payload.pin_configuration.dict()
+#         }
+        
+#         # Send to additional API with proper timeout
+#         async with httpx.AsyncClient(timeout=30.0) as client:
+#             response = await client.post(
+#                 ADDITIONAL_API_URL,
+#                 json=api_payload,  # Send the combined payload
+#                 headers={
+#                     "Content-Type": "application/json",
+#                     "Accept": "application/json"
+#                 },
+#                 follow_redirects=True  # Handle redirects automatically
+#             )
+            
+#             if response.status_code != 200:
+#                 raise HTTPException(
+#                     status_code=response.status_code,
+#                     detail=f"Failed to send file to API: {response.text}"
+#                 )
+            
+#             # Validate response structure
+#             api_response = response.json()
+#             if not isinstance(api_response, dict):
+#                 raise HTTPException(status_code=500, detail="Invalid response from additional API")
+            
+#             return {
+#                 "message": "File sent to API",
+#                 "file_url": file_url,
+#                 "api_response": api_response
+#             }
+            
+#     except httpx.RequestError as e:
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Failed to connect to API: {str(e)}"
+#         )
+        
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+
+
+
+
+
+
+
 @middleware_routes.post("/download_results/{design_folder}/")
 async def download_results(design_folder: str):
     try:

@@ -9,7 +9,6 @@ from azure_blob_functions.blob import upload_blob
 from config.database import users_data
 
 load_dotenv()
-load_dotenv()
 
 CONTAINER_NAME = os.getenv("CONTAINER_NAME")
 
@@ -57,11 +56,14 @@ async def upload(
                 status_code=404, detail="User not found or no update was made."
             )
 
+        updated_user = users_data.find_one({"email": current_user.email}, {"file_urls": 1, "_id": 0})
+
         return {
             "message": "File uploaded successfully",
             "result": upload_result,
             "uploaded_by": current_user.email,
             "file_url": file_url,
+            "files": updated_user.get("file_urls", [])
         }
 
     except Exception as e:
