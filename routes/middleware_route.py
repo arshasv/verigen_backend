@@ -30,7 +30,7 @@ middleware_routes = APIRouter()
 
 
 class DesignFolderRequest(BaseModel):
-    design_folder: str
+    file_id: str
 
 
 # Global dictionary to store notifications by file_id
@@ -84,7 +84,7 @@ class RabbitMQNotificationManager:
 
 @middleware_routes.post("/Icarus/")
 async def process_verilog_file(request: DesignFolderRequest):
-    file_id = request.design_folder  # Assuming the body contains the design_folder as file_id
+    file_id = request.file_id  # Assuming the body contains the file_id as file_id
     
     try:
         file_data = users_data.find_one(
@@ -160,8 +160,10 @@ async def process_verilog_file(request: DesignFolderRequest):
 
 
 
-@middleware_routes.post("/Openlane_2/{file_id}/")  # Added trailing slash
-async def process_openlane2(file_id: str):
+@middleware_routes.post("/Openlane_2/")  # Removed file_id from URL path
+async def process_openlane2(request: DesignFolderRequest):  # Use the DesignFolderRequest to capture file_id
+    file_id = request.file_id  # Access file_id from the request body
+    
     try:
         # Fetch the file URL from the database
         file_data = users_data.find_one(
@@ -200,6 +202,7 @@ async def process_openlane2(file_id: str):
 
             return {
                 "message": "File sent to API",
+                "file_id": file_id,  # Return the file_id in the response body
                 "file_url": file_url,
                 "api_response": api_response,
             }
