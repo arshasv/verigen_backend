@@ -68,7 +68,7 @@ class RabbitMQNotificationManager:
 
         self.channel.basic_consume(queue=self.queue_name, on_message_callback=callback)
 
-    async def start_consuming(self, timeout: int = 30):
+    async def start_consuming(self, timeout: int = 60):
         start_time = asyncio.get_event_loop().time()
 
         while asyncio.get_event_loop().time() - start_time < timeout:
@@ -82,8 +82,10 @@ class RabbitMQNotificationManager:
             self.connection.close()
 
 
-@middleware_routes.post("/Icarus/{file_id}/")
-async def process_verilog_file(file_id: str):
+@middleware_routes.post("/Icarus/")
+async def process_verilog_file(request: DesignFolderRequest):
+    file_id = request.design_folder  # Assuming the body contains the design_folder as file_id
+    
     try:
         file_data = users_data.find_one(
             {"file_urls.filename": file_id}, {"file_urls.$": 1}
@@ -132,6 +134,7 @@ async def process_verilog_file(file_id: str):
         # Return the processing result with notification details
         return {
             "message": "File processing completed",
+            "file_id": file_id,  # Include the file_id in the response body
             "notification": {
                 "status": notification_result["status"],
                 "file": notification_result["file"],
@@ -154,6 +157,7 @@ async def process_verilog_file(file_id: str):
         # Cleanup notification entry
         if file_id in notifications:
             del notifications[file_id]
+
 
 
 @middleware_routes.post("/Openlane_2/{file_id}/")  # Added trailing slash
