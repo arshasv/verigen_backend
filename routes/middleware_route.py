@@ -23,10 +23,6 @@ class DesignFolderRequest(BaseModel):
     file_id: str
 
 
-
-
-
-
 @middleware_routes.post("/Icarus/")
 async def process_verilog_file(request: DesignFolderRequest):
     file_id = request.file_id
@@ -100,16 +96,6 @@ async def process_verilog_file(request: DesignFolderRequest):
             await notification_manager.cleanup()
 
 
-
-
-
-
-
-
-
-
-
-
 @middleware_routes.post("/Openlane_2/")
 async def process_openlane2(request: DesignFolderRequest):
     file_id = request.file_id
@@ -142,17 +128,6 @@ async def process_openlane2(request: DesignFolderRequest):
         raise HTTPException(status_code=500, detail=f"Failed to connect to API: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
-
-
-
-
-
-
-
-
 
 
 @middleware_routes.post("/download_results/")
