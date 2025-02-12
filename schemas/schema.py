@@ -1,3 +1,6 @@
+
+
+
 def user_details(user) -> dict:
     return {
         "id": str(user["_id"]),
