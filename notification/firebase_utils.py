@@ -1,13 +1,17 @@
 import firebase_admin
 from firebase_admin import credentials, messaging
 import logging
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Path to your Firebase service account key file
-FIREBASE_CREDENTIALS_PATH = "notification/verigen-c00bb-firebase-adminsdk-81g09-85cb38dcba.json"
+FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH")
 
 def initialize_firebase():
     """
