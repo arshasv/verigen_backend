@@ -36,3 +36,6 @@ config.yaml
 .DS_Store  # macOS
 Thumbs.db  # Windows
 ehthumbs.db  # Windows
+
+# Ignore Firebase credentials
+notification/verigen-c00bb-firebase-adminsdk-81g09-85cb38dcba.json

@@ -19,14 +19,17 @@ UPLOAD_BLOB_URL = os.getenv("UPLOAD_BLOB_URL", "http://localhost:5000/upload_to_
 
 middleware_routes = APIRouter()
 
+# Updated request model to include fcm_token
 class DesignFolderRequest(BaseModel):
     file_id: str
-
+    fcm_token: str  # Add this field to the request model
 
 @middleware_routes.post("/Icarus/")
 async def process_verilog_file(request: DesignFolderRequest):
     file_id = request.file_id
+    fcm_token = request.fcm_token  # Extract the FCM token from the request
     notification_manager = None
+
     try:
         # Find file data
         file_data = users_data.find_one(
@@ -36,12 +39,12 @@ async def process_verilog_file(request: DesignFolderRequest):
         if not file_data or "file_urls" not in file_data:
             raise HTTPException(status_code=404, detail="File not found")
         file_url = file_data["file_urls"][0]["url"]
-        
+
         # Initialize RabbitMQ manager
-        notification_manager = AsyncRabbitMQManager()
+        notification_manager = AsyncRabbitMQManager(queue_name="verilog_processing")
         await notification_manager.connect()
-        await notification_manager.setup_consumer(file_id)
-        
+        await notification_manager.setup_consumer(fcm_token) # Pass the FCM token here
+
         # Send request to Verilog processing service
         async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.post(
@@ -57,16 +60,16 @@ async def process_verilog_file(request: DesignFolderRequest):
                     status_code=response.status_code,
                     detail=f"Verilog processing failed: {response.text}"
                 )
-        
+
         # Wait for notification
         try:
-            notification_result = await notification_manager.get_notification(timeout=120)
+            notification_result = await notification_manager.get_notification(timeout=60)
         except asyncio.TimeoutError:
             raise HTTPException(
                 status_code=504,
                 detail="Timeout waiting for RabbitMQ notification"
             )
-        
+
         return {
             "message": "File processing completed",
             "file_id": file_id,
@@ -81,19 +84,27 @@ async def process_verilog_file(request: DesignFolderRequest):
                 }
             }
         }
+
     except httpx.RequestError as e:
         raise HTTPException(
             status_code=500,
             detail=f"Failed to connect to Verilog service: {str(e)}"
         )
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Processing error: {str(e)}"
         )
+
     finally:
         if notification_manager:
             await notification_manager.cleanup()
+
+
+
+
+
 
 
 @middleware_routes.post("/Openlane_2/")
@@ -128,6 +139,14 @@ async def process_openlane2(request: DesignFolderRequest):
         raise HTTPException(status_code=500, detail=f"Failed to connect to API: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+
+
+
+
 
 
 @middleware_routes.post("/download_results/")
