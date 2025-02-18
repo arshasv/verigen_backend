@@ -75,7 +75,7 @@ class AsyncRabbitMQManager:
 
                     # Send push notification via Firebase
                     notification_title = "Verilog Processing Update"
-                    notification_body = f"Message received: {msg_body['status']}"
+                    notification_body = f"Status - {msg_body['status']}  , Log - {msg_body['log']}"
                     try:
                         send_push_notification(fcm_token, notification_title, notification_body)
                         logger.info("Push notification sent successfully.")
