@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 # Path to your Firebase service account key file
 FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH")
 
+
 def initialize_firebase():
     """
     Initialize Firebase Admin SDK.
@@ -25,7 +26,9 @@ def initialize_firebase():
             firebase_admin.initialize_app(cred)
             logger.info("Firebase Admin SDK initialized successfully.")
         except FileNotFoundError:
-            logger.error(f"Firebase credentials file not found at: {FIREBASE_CREDENTIALS_PATH}")
+            logger.error(
+                f"Firebase credentials file not found at: {FIREBASE_CREDENTIALS_PATH}"
+            )
             raise
         except ValueError as ve:
             logger.error(f"Invalid Firebase credentials: {ve}")
@@ -35,6 +38,7 @@ def initialize_firebase():
             raise
     else:
         logger.info("Firebase Admin SDK is already initialized.")
+
 
 def send_push_notification(token: str, title: str, body: str):
     """
@@ -59,6 +63,3 @@ def send_push_notification(token: str, title: str, body: str):
     except Exception as e:
         logger.error(f"Failed to send push notification: {e}")
         raise
-
-
-    

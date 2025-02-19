@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 # Initialize Firebase Admin SDK
 initialize_firebase()
 
+
+
+
+
 class AsyncRabbitMQManager:
     def __init__(self, host="localhost", queue_name="verilog_processing"):
         """
@@ -26,6 +30,8 @@ class AsyncRabbitMQManager:
         self.channel = None
         self.queue = None
         self.message_queue = asyncio.Queue()
+
+
 
     async def connect(self):
         """
@@ -44,6 +50,8 @@ class AsyncRabbitMQManager:
         except Exception as e:
             logger.error(f"Failed to connect to RabbitMQ: {e}")
             raise
+
+
 
     async def setup_consumer(self, fcm_token: str):
         """
@@ -91,7 +99,11 @@ class AsyncRabbitMQManager:
                 except Exception as e:
                     logger.error(f"Error processing message: {e}")
 
-        # Start consuming messages from the queue
+
+
+#------------------------- Start consuming messages from the queue -------------------------
+
+
         await self.queue.consume(process_message)
         logger.info("Started consuming messages.")
 
