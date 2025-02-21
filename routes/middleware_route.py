@@ -35,9 +35,8 @@ class DesignFolderRequest(BaseModel):
     fcm_token: str  # Add this field to the request model
 
 
-
-
 # ------------------------- Icarus ApI -------------------------
+
 
 @middleware_routes.post("/Icarus/")
 async def process_verilog_file(request: DesignFolderRequest):
@@ -113,9 +112,8 @@ async def process_verilog_file(request: DesignFolderRequest):
             await notification_manager.cleanup()
 
 
-
-
 # ------------------------- Openlane 2 API  -------------------------
+
 
 @middleware_routes.post("/Openlane_2/")
 async def process_openlane2(request: DesignFolderRequest):
@@ -163,9 +161,8 @@ async def process_openlane2(request: DesignFolderRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
-
 # ------------------------- Download Results -------------------------
+
 
 @middleware_routes.post("/download_results/")
 async def download_results(request: DesignFolderRequest):

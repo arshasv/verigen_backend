@@ -74,17 +74,31 @@ class AsyncRabbitMQManager:
             """
             async with message.process():
                 try:
-                    # Decode the message body
                     msg_body = json.loads(message.body.decode())
-                    logger.info(f"Received message: {msg_body}")
 
+                    # Log the received message and its 'log' field
+                    logger.info(f"Received message: {msg_body}")
+                    if 'log' in msg_body:
+                        logger.info(f"Received log: {msg_body['log']}")
+                    else:
+                        logger.info("No 'log' field found in the message.")
+
+                    # Extract the error log (if it exists) and convert it to a string
+                    error_log = msg_body.get("log", "")  # Default to an empty string if 'log' is missing
+                    error_str = str(error_log).replace("\n", "\\n")  # Escape newlines for safety
+                    logger.info(f"log message: {error_str}")
+                    # Combine the original message and error log into a single payload
+                    queue_payload = {
+                        "original_message": msg_body,
+                        "error_log": error_str
+                    }
                     # Add the message to the internal queue
-                    await self.message_queue.put(msg_body)
+                    await self.message_queue.put(queue_payload)
 
                     # Send push notification via Firebase
                     notification_title = "Verilog Processing Update"
                     notification_body = (
-                        f"Status - {msg_body['status']}, Log - {msg_body['log']}" 
+                        f"Status - {msg_body['status']}  log - {error_str}" 
                         if 'log' in msg_body 
                         else f"Status - {msg_body['status']}"
                     )
@@ -101,7 +115,7 @@ class AsyncRabbitMQManager:
 
 
 
-#------------------------- Start consuming messages from the queue -------------------------
+#-Start consuming messages from the queue 
 
 
         await self.queue.consume(process_message)
@@ -134,3 +148,7 @@ class AsyncRabbitMQManager:
         if self.connection and not self.connection.is_closed:
             await self.connection.close()
             logger.info("Closed RabbitMQ connection.")
+
+
+
+#-------------------------RabbitMQ Manager Openlane ------------------
