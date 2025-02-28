@@ -15,7 +15,7 @@ initialize_firebase()
 
 
 
-class AsyncRabbitMQManager:
+class AsyncRabbitMQManagerIcarus:
     def __init__(self, host="localhost", queue_name="verilog_processing"):
         """
         Initialize the RabbitMQ manager.
