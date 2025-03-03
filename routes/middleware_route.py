@@ -224,16 +224,13 @@ async def send_delayed_notification(fcm_token, file_id, file_url):
     
     # Create mock success response
     success_response = {
-        "status": "success",
-        "file": file_id,
-        "path": f"/processed/{file_id}",
-        "log": "Processing completed successfully"
+        "status": "success"
     }
     
     # Send to FCM
     try:
         notification_title = "Verilog Processing Update"
-        notification_body = f"Status - {success_response['status']}, Log - {success_response['log']}"
+        notification_body = f"OpenLane flow - {success_response['status']}"
         
         from notification.firebase_utils import initialize_firebase, send_push_notification
         initialize_firebase()
