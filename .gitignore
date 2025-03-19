@@ -21,6 +21,7 @@ __pycache__/
 *.py[cod]
 env/
 venv/
+myenv/
 *.egg-info/
 
 # Ignore environment and configuration files
