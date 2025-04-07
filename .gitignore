@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 env/
+myenv/
 venv/
 
 # Ignore environment and configuration files
