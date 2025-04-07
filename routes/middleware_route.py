@@ -6,6 +6,7 @@ from config.database import users_data
 from pydantic import BaseModel
 import asyncio
 import json
+import sys
 
 # Import RabbitMQ Manager from separate module
 from .rabbitmq_manager_1 import AsyncRabbitMQManagerIcarus
@@ -19,11 +20,11 @@ VERILOG_PROCESS_URL = (
     + "/"
 )
 ADDITIONAL_API_URL = (
-    os.getenv("ADDITIONAL_API_URL", "http://localhost:5000/run_openlane/").rstrip("/")
+    os.getenv("ADDITIONAL_API_URL", "http://0.0.0.0:5000/run_openlane").rstrip("/")
     + "/"
 )
 UPLOAD_BLOB_URL = (
-    os.getenv("UPLOAD_BLOB_URL", "http://localhost:5000/upload_to_blob/").rstrip("/")
+    os.getenv("UPLOAD_BLOB_URL", "http://0.0.0.0:5000/upload_to_blob/").rstrip("/")
     + "/"
 )
 
@@ -146,7 +147,7 @@ async def process_verilog_file(request: DesignFolderRequest):
 #         file_url = file_data["file_urls"][0]["url"]
       
 #         # Initialize RabbitMQ manager
-#         notification_manager = AsyncRabbitMQManagerOpenlane(queue_name="verilog_processing")
+#         notification_manager = AsyncRabbitMQManagerOpenlane(queue_name="verilog_queue")
 #         await notification_manager.connect()
 #         await notification_manager.setup_consumer(fcm_token)  # Pass the FCM token here
 
@@ -204,48 +205,21 @@ async def process_verilog_file(request: DesignFolderRequest):
 #             await notification_manager.cleanup()
 
 
-import logging
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 
 
 
-async def send_delayed_notification(fcm_token, file_id, file_url):
-    # Wait a short time to simulate processing
-    await asyncio.sleep(2)
-    
-    # Create mock success response
-    success_response = {
-        "status": "success"
-    }
-    
-    # Send to FCM
-    try:
-        notification_title = "Verilog Processing Update"
-        notification_body = f"OpenLane flow - {success_response['status']}"
-        
-        from notification.firebase_utils import initialize_firebase, send_push_notification
-        initialize_firebase()
-        send_push_notification(fcm_token, notification_title, notification_body)
-        logger.info("Delayed mock push notification sent successfully.")
-    except Exception as e:
-        logger.error(f"Failed to send delayed mock notification: {e}")
+
+
 
 @middleware_routes.post("/Openlane_2/")
 async def process_openlane2(request: DesignFolderRequest):
     file_id = request.file_id
-    fcm_token = request.fcm_token
+    fcm_token = request.fcm_token  # Extract the FCM token from the request
+    notification_manager = None
     
     try:
-        # Validate file exists
         file_data = users_data.find_one(
             {"file_urls.filename": file_id}, {"file_urls.$": 1}
         )
@@ -253,22 +227,162 @@ async def process_openlane2(request: DesignFolderRequest):
             raise HTTPException(status_code=404, detail="File not found")
         file_url = file_data["file_urls"][0]["url"]
         
-        # Start background task to send notification after delay
-        asyncio.create_task(send_delayed_notification(fcm_token, file_id, file_url))
+        # Initialize RabbitMQ manager
+        notification_manager = AsyncRabbitMQManagerOpenlane(queue_name="verilog_queue")
+        await notification_manager.connect()
+        await notification_manager.setup_consumer(fcm_token)  # Pass the FCM token here
         
-        # Return immediate success
-        return {
-            "message": "File processing started successfully",
-            "file_id": file_id,
-            "status": "processing",
-            "processing_details": {
+        async with httpx.AsyncClient(timeout=None, follow_redirects=True) as client:
+            response = await client.post(
+                ADDITIONAL_API_URL,
+                json={"blob_url": file_url},
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+            if response.status_code not in [200, 307]:
+                # Don't raise exception on 307, but do for other non-200 status codes
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Failed to send file to API: {response.text}",
+                )
+            
+            # If we got a 307, the follow_redirects=True should have handled it
+            
+        # Wait for notification
+        try:
+            notification_result = await notification_manager.get_notification(
+                timeout=None
+            )
+        except asyncio.TimeoutError:
+            # Don't clean up RabbitMQ connection on timeout - let caller retry
+            return {
+                "message": "Waiting for RabbitMQ notification",
                 "file_id": file_id,
-                "original_url": file_url,
+                "status": "pending"
+            }
+        
+        # Only clean up connection if successful
+        if notification_manager:
+            await notification_manager.cleanup()
+            notification_manager = None
+            
+        return {
+            "message": "File processing completed",
+            "file_id": file_id,
+            "notification": {
+                "status": notification_result.get("status"),
+                "file": notification_result.get("file", file_id),
+                "path": notification_result.get("path"),
+                "processing_details": {
+                    "file_id": file_id,
+                    "original_url": file_url,
+                    "process_time": "completed",
+                },
             },
         }
         
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to connect to Verilog service: {str(e)}"
+        )
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+        
+    # finally:
+    #     # Only clean up if we had an exception
+    #     if notification_manager and sys.exc_info()[0] is not None:
+    #         await notification_manager.cleanup()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#------------------------- Openlane 2 API  testing  -------------------------  
+
+# import logging
+# import os
+# from dotenv import load_dotenv
+
+# load_dotenv()
+
+# # Configure logging
+# logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger(__name__)
+
+
+
+
+
+# async def send_delayed_notification(fcm_token, file_id, file_url):
+#     # Wait a short time to simulate processing
+#     await asyncio.sleep(2)
+    
+#     # Create mock success response
+#     success_response = {
+#         "status": "success",
+#         "file": file_id,
+#         "path": f"/processed/{file_id}",
+#         "log": "Processing completed successfully"
+#     }
+    
+#     # Send to FCM
+#     try:
+#         notification_title = "Verilog Processing Update"
+#         notification_body = f"Status - {success_response['status']}, Log - {success_response['log']}"
+        
+#         from notification.firebase_utils import initialize_firebase, send_push_notification
+#         initialize_firebase()
+#         send_push_notification(fcm_token, notification_title, notification_body)
+#         logger.info("Delayed mock push notification sent successfully.")
+#     except Exception as e:
+#         logger.error(f"Failed to send delayed mock notification: {e}")
+
+# @middleware_routes.post("/Openlane_2/")
+# async def process_openlane2(request: DesignFolderRequest):
+#     file_id = request.file_id
+#     fcm_token = request.fcm_token
+    
+#     try:
+#         # Validate file exists
+#         file_data = users_data.find_one(
+#             {"file_urls.filename": file_id}, {"file_urls.$": 1}
+#         )
+#         if not file_data or not file_data.get("file_urls"):
+#             raise HTTPException(status_code=404, detail="File not found")
+#         file_url = file_data["file_urls"][0]["url"]
+        
+#         # Start background task to send notification after delay
+#         asyncio.create_task(send_delayed_notification(fcm_token, file_id, file_url))
+        
+#         # Return immediate success
+#         return {
+#             "message": "File processing started successfully",
+#             "file_id": file_id,
+#             "status": "processing",
+#             "processing_details": {
+#                 "file_id": file_id,
+#                 "original_url": file_url,
+#             },
+#         }
+        
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
 
 
 

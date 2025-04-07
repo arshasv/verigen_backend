@@ -12,9 +12,6 @@ logger = logging.getLogger(__name__)
 initialize_firebase()
 
 
-
-
-
 class AsyncRabbitMQManagerIcarus:
     def __init__(self, host="localhost", queue_name="verilog_processing"):
         """
@@ -31,16 +28,14 @@ class AsyncRabbitMQManagerIcarus:
         self.queue = None
         self.message_queue = asyncio.Queue()
 
-
-
     async def connect(self):
         """
         Establish a connection to RabbitMQ and declare the queue.
         """
         try:
-            logger.info(f"Connecting to RabbitMQ at {self.host}...")
+            logger.info(f"Connecting to RabbitMQ at {self.host} on port 5673...")
             self.connection = await aio_pika.connect_robust(
-                f"amqp://{self.host}", timeout=30
+                f"amqp://{self.host}:5673", timeout=30
             )
             self.channel = await self.connection.channel()
             self.queue = await self.channel.declare_queue(
@@ -50,8 +45,6 @@ class AsyncRabbitMQManagerIcarus:
         except Exception as e:
             logger.error(f"Failed to connect to RabbitMQ: {e}")
             raise
-
-
 
     async def setup_consumer(self, fcm_token: str):
         """
@@ -98,11 +91,6 @@ class AsyncRabbitMQManagerIcarus:
                     logger.error("Failed to decode message body.")
                 except Exception as e:
                     logger.error(f"Error processing message: {e}")
-
-
-
-#------------------------- Start consuming messages from the queue -------------------------
-
 
         await self.queue.consume(process_message)
         logger.info("Started consuming messages.")
