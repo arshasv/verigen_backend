@@ -112,7 +112,7 @@
 # load_dotenv()
 
 # # API Key
-# google_api_key = "AIzaSyAbvRpgzO8g6h2AK5V7B37hdOxf73nmj4A"
+# google_api_key = ""
 # if not google_api_key:
 #     raise ValueError("GOOGLE_API_KEY is missing. Please set it in your .env file.")
 
@@ -275,7 +275,7 @@ import time
 load_dotenv()
 
 # API Key
-google_api_key = "AIzaSyAbvRpgzO8g6h2AK5V7B37hdOxf73nmj4A"
+google_api_key = ""
 if not google_api_key:
     raise ValueError("GOOGLE_API_KEY is missing. Please set it in your .env file.")
 
