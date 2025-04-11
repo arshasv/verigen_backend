@@ -275,7 +275,7 @@ import time
 load_dotenv()
 
 # API Key
-google_api_key = ""
+google_api_key = os.getenv("GOOGLE_API_KEY")
 if not google_api_key:
     raise ValueError("GOOGLE_API_KEY is missing. Please set it in your .env file.")
 
@@ -289,6 +289,9 @@ llm = ChatGoogleGenerativeAI(
 )
 
 def download_and_extract_logs(log_zip_url, log_zip_path, log_dir_path):
+    """
+    Download and extract log files from a zip URL.
+    """
     response = requests.get(log_zip_url)
     with open(log_zip_path, "wb") as file:
         file.write(response.content)
@@ -298,32 +301,33 @@ def download_and_extract_logs(log_zip_url, log_zip_path, log_dir_path):
     print("Logs downloaded and extracted.")
     
     openlane_log_files = [
-        "flow.log",
         "yosys-synthesis.log", "verilator-lint.log",
         "openroad-floorplan.log", "openroad-globalplacement.log", "openroad-detailedplacement.log",
         "openroad-cts.log", "openroad-globalrouting.log", "openroad-detailedrouting.log",
         "error.log", "warning.log"
     ]
 
-    # Store logs as a dictionary instead of a list
     log_files_dict = {}
     for root, _, files in os.walk(log_dir_path):
         for file in files:
             if file in openlane_log_files:
                 full_path = os.path.join(root, file)
-                # Use the filename as key
                 log_files_dict[file] = full_path
     return log_files_dict
 
 def extract_relevant_lines(content):
+    """
+    Extract relevant lines from log content based on keywords.
+    """
     keywords = ['violation', 'slack', 'error', 'warning', 'utilization', 'congestion', 'density', 'area', 
                 'cell', 'wire', 'die', 'core', 'HPWL', 'overflow', 'RC', 'timing', 'width', 'height', 
                 'PIN', 'PORT', 'DESIGN', 'instance', 'net', 'buf', 'inv', 'tap', 'fill']
     return "\n".join([line for line in content.splitlines() if any(k in line.lower() for k in keywords)])
 
 def save_outputs(result, output_dir="outputs"):
-    """Save results in multiple formats"""
-    # Create output directory if it doesn't exist
+    """
+    Save results in multiple formats (JSON and Markdown).
+    """
     os.makedirs(output_dir, exist_ok=True)
     
     # Save as JSON
@@ -344,35 +348,27 @@ def save_outputs(result, output_dir="outputs"):
     
     return json_path, md_path
 
-def analyze_logs(log_files_dict):
-    # Create a specialized log analyzer agent
+def analyze_logs(log_files_dict, max_summary_length=500):
+    """
+    Analyze multiple log files and generate brief summaries for each.
+    
+    Args:
+        log_files_dict (dict): Dictionary mapping log file names to their paths
+        max_summary_length (int): Maximum length of each log summary in characters
+    
+    Returns:
+        dict: Dictionary containing brief summaries for each log file
+    """
     log_analyzer = Agent(
         role="OpenLane Log Expert",
-        goal="Extract key technical metrics and insights from OpenLane logs",
+        goal="Extract only the most critical insights from OpenLane logs for quick review.",
         backstory="""Expert in ASIC design flow with deep knowledge of OpenLane toolchain and log interpretation. 
-                    Specializes in identifying critical metrics, violations, errors, and optimization opportunities 
-                    from different stages of the ASIC flow.""",
+                    Specializes in identifying critical metrics, violations, errors, and optimization opportunities.""",
         verbose=True,
         llm=llm
     )
     
-    # Dictionary to store individual log analyses
     log_analyses = {}
-    
-    # Sample format examples for the agent to understand the desired output structure
-    example_format = {
-        "yosys-synthesis.log": """Cell Statistics: 225 cells total including sky130_fd_sc_hd__a21bo_2, sky130_fd_sc_hd__dfrtp_2, etc.
-Area: Total synthesized design area is 3326.940800.
-Wire Statistics: 229 wires, 260 wire bits, 229 public wires, 260 public wire bits, 5 ports, 36 port bits.""",
-        
-        "openroad-floorplan.log": """Die Area: 0.0 0.0 97.025 107.745 µm
-Core Area: 5.52 10.88 91.08 95.2 µm
-Row Placement: 31 rows added with site dimensions of 2.72 height and 0.46 width
-Cell Counts and Area: 64 sequential cells (1681.61), 161 combinational cells (1645.33), total cell area 3326.94"""
-    }
-    
-    # Create tasks for analyzing each log file
-    log_analysis_tasks = []
     
     for log_name, log_path in log_files_dict.items():
         try:
@@ -385,78 +381,72 @@ Cell Counts and Area: 64 sequential cells (1681.61), 161 combinational cells (16
                 
             task = Task(
                 description=f"""
-                Analyze the content from {log_name} and extract only the most important technical information.
+                Generate an extremely concise summary (max 3-5 bullet points) of the most critical information from {log_name}.
+
+                Focus ONLY on:
+                - Critical errors that block design progress
+                - Severe timing violations (worst slack)
+                - Utilization/congestion issues that require attention
+                - DRC/LVS violations that must be fixed
                 
-                Focus on extracting the following in a concise format:
-                - Key metrics (area, slack, utilization, density)
-                - Cell counts and types
-                - Die/core dimensions
-                - Wire statistics
-                - HPWL values
-                - Violations and errors
-                - Routing information
-                - Any critical parameters
+                Keep each bullet point to 1-2 short sentences. Be direct and specific.
+                Avoid detailed explanations and background information.
+                Omit non-critical warnings or expected messages.
                 
                 Here's the filtered log content:
                 
-                {filtered[:12000]}
-                
-                Example of desired output format:
-                {json.dumps(example_format[log_name] if log_name in example_format else example_format["yosys-synthesis.log"], indent=2)}
+                {filtered[:8000]}
                 """,
-                expected_output="""
-                A concise, structured summary of the important technical information from this log file.
-                Format the response as plain text with key metrics and findings.
-                Do NOT include any JSON formatting, headers, or explanatory text in your response.
-                Only include the actual content that should be the value for this log filename in the final JSON.
-                """,
+                expected_output="A 3-5 bullet point summary listing ONLY the most critical issues that need attention.",
                 agent=log_analyzer
             )
-            log_analysis_tasks.append((log_name, task))
+            
+            result = task.execute()
+            
+            # Limit summary length
+            result = result.strip()
+            if len(result) > max_summary_length:
+                result = result[:max_summary_length] + "..."
+                
+            log_analyses[log_name] = result
+            
         except Exception as e:
             print(f"Error processing {log_name}: {e}")
             log_analyses[log_name] = f"Error processing log: {str(e)}"
     
-    # Create a crew with just the log analyzer
-    crew = Crew(agents=[log_analyzer], tasks=[task for _, task in log_analysis_tasks], verbose=True)
-    
+    save_outputs(log_analyses)
+    return log_analyses
+
+def process_openlane_logs(log_zip_url, max_summary_length=500):
+    """
+    Process OpenLane logs from a given zip URL, analyze them, and return the results.
+
+    Args:
+        log_zip_url (str): The URL of the zip file containing OpenLane logs.
+        max_summary_length (int): Maximum length of each log summary in characters
+
+    Returns:
+        dict: A dictionary containing the analysis results for each log file.
+    """
+    log_zip_path = "logfile.zip"
+    log_dir_path = "logfile"
+
     try:
-        print("\n===== Analyzing individual log files =====\n")
-        
-        # Process each log file individually
-        for i, (log_name, task) in enumerate(log_analysis_tasks):
-            print(f"\nProcessing log {i+1}/{len(log_analysis_tasks)}: {log_name}")
-            try:
-                result = task.execute()
-                log_analyses[log_name] = result.strip()
-            except Exception as e:
-                print(f"Error executing task for {log_name}: {e}")
-                log_analyses[log_name] = f"Analysis failed: {str(e)}"
-        
-        # Display the output in the console
-        print("\n\n===== FINAL ANALYSIS REPORT =====\n")
-        print(json.dumps(log_analyses, indent=4))
-        print("\n===============================\n")
-        
-        # Save outputs in multiple formats
-        save_outputs(log_analyses)
-        return log_analyses
-        
+        logs = download_and_extract_logs(log_zip_url, log_zip_path, log_dir_path)
+        result = analyze_logs(logs, max_summary_length)
+        return result
     except Exception as e:
-        error_msg = f"Error in overall analysis: {e}"
-        print(error_msg)
-        with open("error_output.json", "w") as f:
-            json.dump({"error": str(e)}, f, indent=4)
+        print(f"Error processing OpenLane logs: {e}")
         return {"error": str(e)}
 
 # Main block
 if __name__ == "__main__":
     start = time.time()
     log_zip_url = "https://generativeaidatadocs.blob.core.windows.net/outputs/design_20250327_042258.zip"
-    log_zip_path = "logfile.zip"
-    log_dir_path = "logfile"
-
-    logs = download_and_extract_logs(log_zip_url, log_zip_path, log_dir_path)
-    result = analyze_logs(logs)
+    
+    # Set the maximum length for each log summary (adjust as needed)
+    max_summary_length = 500
+    
+    result = process_openlane_logs(log_zip_url, max_summary_length)
     end = time.time()
     print(f"Completed in {end - start:.2f} seconds.")
