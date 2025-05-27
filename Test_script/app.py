@@ -1,15 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import List
 import uvicorn
-import os
-import sys
-from pathlib import Path
-import requests
-from urllib.parse import urlparse
-
-# Import the functions from your original script
-# Assuming config_template_generator.py is in the same directory
 from config_template_generator import generate_openroad_files, download_design_file
 
 app = FastAPI(
@@ -18,18 +10,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Define the request model with all required parameters
-class OpenROADRequest(BaseModel):
-    file_url: str = Field(..., description="URL of the file to be processed")
+# Define the pin configuration model
+class PinConfiguration(BaseModel):
+    N: List[str] = Field(..., description="List of pins for the North direction")
+    S: List[str] = Field(..., description="List of pins for the South direction")
+    E: List[str] = Field(..., description="List of pins for the East direction")
+    W: List[str] = Field(..., description="List of pins for the West direction")
+
+# Define the main request model
+class OpenLanePayload(BaseModel):
+    blob_url: str = Field(..., description="URL of the file to be processed")
     design_name: str = Field(..., description="Name of the design")
-    clock_period: float = Field(..., description="Clock period in nanoseconds")
     clock_port: str = Field(..., description="Clock port name")
-    north_pins: str = Field(..., description="Comma-separated list of pins for North direction")
-    south_pins: str = Field(..., description="Comma-separated list of pins for South direction")
-    east_pins: str = Field(..., description="Comma-separated list of pins for East direction")
-    west_pins: str = Field(..., description="Comma-separated list of pins for West direction")
-    die_area: Optional[str] = Field(None, description="Die area in format 'xmin ymin xmax ymax', e.g. '0 0 600 600'")
-    output_base_dir: Optional[str] = Field("/home/opentrends/openlane2/designs", description="Base output directory")
+    clock_period: int = Field(..., description="Clock period in nanoseconds")
+    die_area: str = Field(..., description="Die area in format 'xmin ymin xmax ymax', e.g. '0 0 600 600'")
+    pin_configuration: PinConfiguration = Field(..., description="Pin configuration for all directions")
 
 # Define the response model
 class OpenROADResponse(BaseModel):
@@ -40,16 +35,22 @@ class OpenROADResponse(BaseModel):
     message: str
 
 @app.post("/generate_config", response_model=OpenROADResponse)
-async def generate_config(request: OpenROADRequest):
+async def generate_config(request: OpenLanePayload):
     """
     Generate OpenROAD configuration files based on provided parameters
     """
     try:
+        # Extract pin configurations
+        north_pins = ",".join(request.pin_configuration.N)
+        south_pins = ",".join(request.pin_configuration.S)
+        east_pins = ",".join(request.pin_configuration.E)
+        west_pins = ",".join(request.pin_configuration.W)
+
         # First download the design file
         downloaded_file = download_design_file(
             file_url=request.file_url,
             design_name=request.design_name,
-            output_base_dir=request.output_base_dir
+            output_base_dir="/home/opentrends/openlane2/designs"
         )
         
         if not downloaded_file:
@@ -60,11 +61,11 @@ async def generate_config(request: OpenROADRequest):
             design_name=request.design_name,
             clock_period=request.clock_period,
             clock_port=request.clock_port,
-            north_pins=request.north_pins,
-            south_pins=request.south_pins,
-            east_pins=request.east_pins,
-            west_pins=request.west_pins,
-            output_base_dir=request.output_base_dir,
+            north_pins=north_pins,
+            south_pins=south_pins,
+            east_pins=east_pins,
+            west_pins=west_pins,
+            output_base_dir="/home/opentrends/openlane2/designs",
             die_area=request.die_area
         )
         

@@ -8,12 +8,12 @@ from urllib.parse import urlparse
 import argparse
 import shutil
 
-def download_design_file(file_url, design_name, output_base_dir="/home/opentrends/openlane2/designs"):
+def download_design_file(blob_url, design_name, output_base_dir="/home/opentrends/openlane2/designs"):
     """
     Download a design file from a URL and save it to a folder named after the design.
     
     Args:
-        file_url (str): URL of the file to download
+        blob_url (str): URL of the file to download
         design_name (str): Name of the design, used for the folder name
         output_base_dir (str): Base directory for outputs
     
@@ -29,7 +29,7 @@ def download_design_file(file_url, design_name, output_base_dir="/home/opentrend
     os.makedirs(src_dir, exist_ok=True)
     
     # Get the filename from the URL
-    parsed_url = urlparse(file_url)
+    parsed_url = urlparse(blob_url)
     filename = os.path.basename(parsed_url.path)
     
     # If filename is empty or not provided in URL, use a default name
@@ -41,7 +41,7 @@ def download_design_file(file_url, design_name, output_base_dir="/home/opentrend
     
     try:
         # Download the file
-        response = requests.get(file_url, stream=True)
+        response = requests.get(blob_url, stream=True)
         response.raise_for_status()  # Raise an exception for HTTP errors
         
         # Save the file
@@ -288,7 +288,7 @@ def process_api_response(api_data, output_base_dir="."):
         south_pins = api_data.get('south_pins', '')
         east_pins = api_data.get('east_pins', '')
         west_pins = api_data.get('west_pins', '')
-        file_url = api_data.get('file_url')
+        blob_url = api_data.get('blob_url')
         die_area = api_data.get('die_area', '')
         
         # Validate required parameters
@@ -296,11 +296,11 @@ def process_api_response(api_data, output_base_dir="."):
             raise ValueError("Missing required parameter: design_name")
         if not clock_port:
             raise ValueError("Missing required parameter: clock_port")
-        if not file_url:
-            raise ValueError("Missing required parameter: file_url")
+        if not blob_url:
+            raise ValueError("Missing required parameter: blob_url")
         
         # Download the design file to the design-specific folder
-        downloaded_file = download_design_file(file_url, design_name, output_base_dir)
+        downloaded_file = download_design_file(blob_url, design_name, output_base_dir)
         if not downloaded_file:
             raise ValueError("Failed to download design file")
         
@@ -388,8 +388,8 @@ def main():
         os.makedirs(src_dir, exist_ok=True)
         
         # Check if we're downloading a file
-        if args.file_url:
-            downloaded_file = download_design_file(args.file_url, args.design_name, args.output_dir)
+        if args.blob_url:
+            downloaded_file = download_design_file(args.blob_url, args.design_name, args.output_dir)
             if not downloaded_file:
                 print("Failed to download design file.")
                 sys.exit(1)
@@ -434,8 +434,8 @@ def main():
         download_option = input("Do you want to download a design file? (y/n): ").strip().lower()
         
         if download_option == 'y':
-            file_url = input("Enter URL for the design file: ")
-            downloaded_file = download_design_file(file_url, design_name, output_base_dir)
+            blob_url = input("Enter URL for the design file: ")
+            downloaded_file = download_design_file(blob_url, design_name, output_base_dir)
             
             if not downloaded_file:
                 print("Failed to download file. Continuing with configuration generation...")

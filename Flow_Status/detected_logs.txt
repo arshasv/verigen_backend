@@ -1,0 +1,12 @@
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/13-openroad-floorplan/openroad-floorplan.log
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/06-yosys-synthesis/yosys-synthesis.log
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/44-openroad-detailedrouting/openroad-detailedrouting.log
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/27-openroad-globalplacement/openroad-globalplacement.log
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/38-openroad-globalrouting/openroad-globalrouting.log
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/34-openroad-cts/openroad-cts.log
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/13-openroad-floorplan/openroad-floorplan.log
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/06-yosys-synthesis/yosys-synthesis.log
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/44-openroad-detailedrouting/openroad-detailedrouting.log
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/27-openroad-globalplacement/openroad-globalplacement.log
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/38-openroad-globalrouting/openroad-globalrouting.log
+New log file detected: /home/opentrends/openlane2/designs/picorv32/runs/RUN_2025-05-19_16-54-16/34-openroad-cts/openroad-cts.log

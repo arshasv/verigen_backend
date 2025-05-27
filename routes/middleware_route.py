@@ -20,12 +20,8 @@ VERILOG_PROCESS_URL = (
     os.getenv("VERILOG_PROCESS_URL", "http://0.0.0.0:8000/process-verilog/").rstrip("/")
     + "/"
 )
-ADDITIONAL_API_URL = (
-    os.getenv("ADDITIONAL_API_URL", "http://0.0.0.0:5000/run_openlane").rstrip("/")
-    + "/"
-)
-UPLOAD_BLOB_URL = (
-    os.getenv("UPLOAD_BLOB_URL", "http://0.0.0.0:5000/upload_to_blob/").rstrip("/")
+OPENLANE_PROCESS_URL = (
+    os.getenv("OPENLANE_PROCESS_URL", "http://0.0.0.0:5000/run_openlane").rstrip("/")
     + "/"
 )
 
@@ -138,7 +134,7 @@ async def process_verilog_file(request: DesignFolderRequest):
 
 
 
-
+#-------------------------------------------Openlane api------------------------------------------
 
 
 @middleware_routes.post("/Openlane_2/")
@@ -171,7 +167,7 @@ async def process_openlane2(payload: OpenLanePayload):
         
         async with httpx.AsyncClient(timeout=300.0, follow_redirects=True) as client:
             response = await client.post(
-                ADDITIONAL_API_URL,
+                OPENLANE_PROCESS_URL,
                 json=api_payload,
                 headers={
                     "Content-Type": "application/json",
@@ -222,7 +218,12 @@ async def process_openlane2(payload: OpenLanePayload):
 
 
 
-#------------------------------------------MOCK api------------------------------------------
+
+
+
+
+
+#------------------------------------------ MOCK api for agentic system  ------------------------------------------
 
 
 from fastapi import APIRouter, HTTPException
