@@ -110,4 +110,3 @@ class AsyncRabbitMQManagerOpenlane:
         except Exception as e:
             logger.error(f"Error during RabbitMQ cleanup: {e}")
 
-

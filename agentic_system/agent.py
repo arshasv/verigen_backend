@@ -282,9 +282,8 @@ if not google_api_key:
 # Configure Gemini
 genai.configure(api_key=google_api_key)
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
+    model="gemini-2.0-flash-lite",
     google_api_key=google_api_key,
-    temperature=0.7,
     convert_system_message_to_human=True
 )
 

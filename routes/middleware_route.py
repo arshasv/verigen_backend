@@ -46,7 +46,7 @@ class PinConfiguration(BaseModel):
 class OpenLanePayload(BaseModel):
     clock_port: str
     clock_period: int
-    die_area: str
+    fp_core_util: float 
     pin_configuration: PinConfiguration
     file_id: str
     fcm_token: str
@@ -160,7 +160,7 @@ async def process_openlane2(payload: OpenLanePayload):
             "design_name": design_name,
             "clock_port": payload.clock_port,
             "clock_period": payload.clock_period,
-            "die_area": payload.die_area,
+            "fp_core_util": payload.fp_core_util,
             "pin_configuration": payload.pin_configuration.dict()
         }
 
@@ -176,7 +176,7 @@ async def process_openlane2(payload: OpenLanePayload):
         await notification_manager.setup_consumer(fcm_token)
 
         # Send the payload to the OpenLane processing API
-        async with httpx.AsyncClient(timeout=300.0, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=500.0, follow_redirects=True) as client:
             response = await client.post(
                 "http://localhost:5000/run_openlane",
                 json=api_payload,
@@ -194,7 +194,7 @@ async def process_openlane2(payload: OpenLanePayload):
 
         # Wait for RabbitMQ notification
         try:
-            notification_result = await notification_manager.get_notification(timeout=300)
+            notification_result = await notification_manager.get_notification(timeout=500)
         except asyncio.TimeoutError:
             return {
                 "message": "Processing taking longer than expected",
@@ -237,5 +237,4 @@ async def process_openlane2(payload: OpenLanePayload):
                 await notification_manager.cleanup()
             except Exception as cleanup_error:
                 print(f"Cleanup error: {cleanup_error}")
-
 

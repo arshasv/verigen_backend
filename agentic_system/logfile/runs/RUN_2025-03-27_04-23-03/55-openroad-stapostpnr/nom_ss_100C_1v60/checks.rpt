@@ -1,0 +1,134 @@
+
+===========================================================================
+report_checks -unconstrained
+===========================================================================
+======================= nom_ss_100C_1v60 Corner ===================================
+
+Startpoint: dsa[8]._8_ (rising edge-triggered flip-flop clocked by core_clock)
+Endpoint: dsa[8]._8_ (rising edge-triggered flip-flop clocked by core_clock)
+Path Group: core_clock
+Path Type: max
+
+Fanout         Cap        Slew       Delay        Time   Description
+---------------------------------------------------------------------------------------------
+                                  0.000000    0.000000   clock core_clock (rise edge)
+                                  0.000000    0.000000   clock source latency
+     1    0.014766    0.000000    0.000000    0.000000 ^ clk (in)
+                                                         clk (net)
+                      0.000828    0.000414    0.000414 ^ clkbuf_0_clk/A (sky130_fd_sc_hd__clkbuf_16)
+     8    0.082920    0.152432    0.264955    0.265369 ^ clkbuf_0_clk/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_0_clk (net)
+                      0.152759    0.004798    0.270167 ^ clkbuf_3_4__f_clk/A (sky130_fd_sc_hd__clkbuf_16)
+     9    0.022312    0.070306    0.262757    0.532924 ^ clkbuf_3_4__f_clk/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_3_4__leaf_clk (net)
+                      0.070329    0.000421    0.533345 ^ dsa[8]._8_/CLK (sky130_fd_sc_hd__dfrtp_1)
+     2    0.005913    0.102574    0.765690    1.299035 v dsa[8]._8_/Q (sky130_fd_sc_hd__dfrtp_1)
+                                                         dsa[8].last_carry (net)
+                      0.102574    0.000084    1.299119 v dsa[8]._4_/B1 (sky130_fd_sc_hd__a21o_1)
+     2    0.007208    0.094306    0.326039    1.625158 v dsa[8]._4_/X (sky130_fd_sc_hd__a21o_1)
+                                                         dsa[8]._1_ (net)
+                      0.094306    0.000202    1.625360 v dsa[8]._7_/A2 (sky130_fd_sc_hd__a21bo_1)
+     1    0.003099    0.064441    0.348389    1.973748 v dsa[8]._7_/X (sky130_fd_sc_hd__a21bo_1)
+                                                         dsa[8].last_carry_next (net)
+                      0.064441    0.000093    1.973841 v dsa[8]._8_/D (sky130_fd_sc_hd__dfrtp_1)
+                                              1.973841   data arrival time
+
+                                 10.000000   10.000000   clock core_clock (rise edge)
+                                  0.000000   10.000000   clock source latency
+     1    0.014766    0.000000    0.000000   10.000000 ^ clk (in)
+                                                         clk (net)
+                      0.000828    0.000414   10.000414 ^ clkbuf_0_clk/A (sky130_fd_sc_hd__clkbuf_16)
+     8    0.082920    0.152432    0.264955   10.265369 ^ clkbuf_0_clk/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_0_clk (net)
+                      0.152759    0.004798   10.270167 ^ clkbuf_3_4__f_clk/A (sky130_fd_sc_hd__clkbuf_16)
+     9    0.022312    0.070306    0.262757   10.532924 ^ clkbuf_3_4__f_clk/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_3_4__leaf_clk (net)
+                      0.070329    0.000421   10.533345 ^ dsa[8]._8_/CLK (sky130_fd_sc_hd__dfrtp_1)
+                                  0.000000   10.533345   clock reconvergence pessimism
+                                 -0.274158   10.259187   library setup time
+                                             10.259187   data required time
+---------------------------------------------------------------------------------------------
+                                             10.259187   data required time
+                                             -1.973841   data arrival time
+---------------------------------------------------------------------------------------------
+                                              8.285345   slack (MET)
+
+
+
+
+===========================================================================
+report_checks --slack_max -0.01
+============================================================================
+======================= nom_ss_100C_1v60 Corner ===================================
+
+No paths found.
+
+
+===========================================================================
+ report_check_types -max_slew -max_cap -max_fanout -violators
+============================================================================
+======================= nom_ss_100C_1v60 Corner ===================================
+
+
+
+===========================================================================
+report_parasitic_annotation -report_unannotated
+============================================================================
+Found 9 unannotated drivers.
+ clkload0/X
+ clkload1/Y
+ clkload2/X
+ clkload3/X
+ clkload4/Y
+ clkload5/Y
+ clkload6/X
+ dsa\[0\]._6__36/HI
+ dsa\[0\]._7__37/HI
+Found 0 partially unannotated drivers.
+
+===========================================================================
+max slew violation count 0
+max fanout violation count 0
+max cap violation count 0
+============================================================================
+
+===========================================================================
+check_setup -verbose -unconstrained_endpoints -multiple_clock -no_clock -no_input_delay -loops -generated_clocks
+===========================================================================
+Warning: There are 34 input ports missing set_input_delay.
+  a[0]
+  a[10]
+  a[11]
+  a[12]
+  a[13]
+  a[14]
+  a[15]
+  a[16]
+  a[17]
+  a[18]
+  a[19]
+  a[1]
+  a[20]
+  a[21]
+  a[22]
+  a[23]
+  a[24]
+  a[25]
+  a[26]
+  a[27]
+  a[28]
+  a[29]
+  a[2]
+  a[30]
+  a[31]
+  a[3]
+  a[4]
+  a[5]
+  a[6]
+  a[7]
+  a[8]
+  a[9]
+  rst
+  x
+Warning: There is 1 unconstrained endpoint.
+  y

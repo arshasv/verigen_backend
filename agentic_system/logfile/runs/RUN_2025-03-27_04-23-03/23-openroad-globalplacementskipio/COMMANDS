@@ -1,0 +1,1 @@
+openroad -exit -no_splash -metrics /app/openlane2/designs/design_20250327_042258/runs/RUN_2025-03-27_04-23-03/23-openroad-globalplacementskipio/or_metrics_out.json /nix/store/dnaq15fi38lia08s0pmzplzf73zskzj8-python3-3.11.9-env/lib/python3.11/site-packages/openlane/scripts/openroad/gpl.tcl

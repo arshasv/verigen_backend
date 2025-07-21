@@ -1,0 +1,77 @@
+99. Printing statistics.
+
+=== delayed_serial_adder ===
+
+   Number of wires:                 13
+   Number of wire bits:             13
+   Number of public wires:           9
+   Number of public wire bits:       9
+   Number of ports:                  6
+   Number of port bits:              6
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:                  8
+     $_ANDNOT_                       2
+     $_NAND_                         1
+     $_OR_                           1
+     $_XNOR_                         1
+     $_XOR_                          1
+     sky130_fd_sc_hd__dfrtp_2        2
+
+   Area for cell type $_NAND_ is unknown!
+   Area for cell type $_OR_ is unknown!
+   Area for cell type $_XOR_ is unknown!
+   Area for cell type $_XNOR_ is unknown!
+   Area for cell type $_ANDNOT_ is unknown!
+
+   Chip area for module '\delayed_serial_adder': 52.550400
+     of which used for sequential elements: 52.550400 (100.00%)
+
+=== spm ===
+
+   Number of wires:                  6
+   Number of wire bits:             69
+   Number of public wires:           6
+   Number of public wire bits:      69
+   Number of ports:                  5
+   Number of port bits:             36
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:                 32
+     delayed_serial_adder           32
+
+   Area for cell type \delayed_serial_adder is unknown!
+
+=== design hierarchy ===
+
+   spm                               1
+     delayed_serial_adder           32
+
+   Number of wires:                422
+   Number of wire bits:            485
+   Number of public wires:         294
+   Number of public wire bits:     357
+   Number of ports:                197
+   Number of port bits:            228
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:                256
+     $_ANDNOT_                      64
+     $_NAND_                        32
+     $_OR_                          32
+     $_XNOR_                        32
+     $_XOR_                         32
+     sky130_fd_sc_hd__dfrtp_2       64
+
+   Area for cell type $_NAND_ is unknown!
+   Area for cell type $_OR_ is unknown!
+   Area for cell type $_XOR_ is unknown!
+   Area for cell type $_XNOR_ is unknown!
+   Area for cell type $_ANDNOT_ is unknown!
+
+   Chip area for top module '\spm': 1681.612800
+     of which used for sequential elements: 52.550400 (3.12%)
+
